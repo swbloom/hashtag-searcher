@@ -1,6 +1,8 @@
-const Twit = require('twit');
-const keyword = '#keyword';
-const config = require('./config.json');
+const Twit    = require('twit');
+const keyword = '#sup';
+const config  = require('./config.json');
+const express = require('express');
+const app     = express();
 
 const T = new Twit({
   consumer_key: config.consumer_key,
@@ -9,14 +11,30 @@ const T = new Twit({
   timeout_ms: 60 * 1000,
 });
 
-//
-//  search twitter for all tweets containing the word 'banana' since July 11, 2011
-//
-T.get('search/tweets', { q: `${keyword} since:2011-07-11`, count: 5 },
-  function(err, data, response) {
-  filterResults(data.statuses);
+const getTweets = function(tweets) {
+    return new Promise((resolve,reject) => {
+      T.get('search/tweets', { q: `${keyword} since:2011-07-11`, count: 5 }, (err, data, response) => {
+        var tweets = data.statuses.map((tweet) => tweet.text);
+        resolve(tweets);
+      });
+    });
+};
+
+// set the view engine to ejs
+app.set('view engine', 'ejs');
+
+// use res.render to load up an ejs view file
+
+app.get('/', function(req, res){
+  getTweets().then((tweets) => {
+    res.render('pages/index', {tweets: tweets});
+  });
 });
 
-const filterResults = function(tweets) {
-  tweets.forEach((tweet) => console.log(tweet.text));
-}
+
+
+
+
+
+app.listen(8080);
+console.log('Listening on 8080');
